@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Pro Gesture Tree - Mobile HUD Edition</title>
+    <title>Pro Gesture Tree - HUD Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <style>
@@ -18,61 +18,46 @@
             z-index: 10; 
             display: flex; 
             flex-direction: column; 
-            justify-content: space-between;
-            padding: 10px;
+            justify-content: space-between; 
+            padding: 20px;
         }
 
         .panel { 
             pointer-events: auto; 
             backdrop-filter: blur(10px); 
-            padding: 12px; 
+            padding: 15px; 
             border-radius: 12px; 
         }
 
         #legend { 
-            width: 100%; 
-            max-width: 300px; 
+            width: fit-content; 
             background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
             border-left: 2px solid var(--gold);
         }
 
-        #controls { 
-            width: 100%; 
-            max-width: 300px; 
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 90px;
-        }
-
-        h1 { margin: 0 0 8px 0; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); opacity: 0.8; }
+        h1 { margin: 0 0 12px 0; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); opacity: 0.8; }
         
-        .gesture-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .gesture-item { font-size: 9px; opacity: 0.3; transition: 0.3s; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 5px; }
-        .gesture-item span:first-child { font-weight: 800; display: block; color: var(--gold); font-size: 8px; }
-        .gesture-item.active { opacity: 1; border-left-color: var(--gold); transform: scale(1.05); }
-        
-        .control-group { margin-top: 10px; }
-        label { display: block; font-size: 8px; text-transform: uppercase; margin-bottom: 4px; color: #aaa; }
-        input[type=range] { width: 100%; height: 24px; cursor: pointer; accent-color: var(--gold); }
+        .gesture-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .gesture-item { font-size: 10px; opacity: 0.3; transition: 0.3s; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 8px; }
+        .gesture-item span:first-child { font-weight: 800; display: block; color: var(--gold); font-size: 9px; margin-bottom: 2px; }
+        .gesture-item.active { opacity: 1; border-left-color: var(--gold); transform: translateX(5px); }
 
         #video-container { 
             position: absolute; 
-            bottom: 15px; 
-            right: 15px; 
-            width: 90px; 
-            height: 120px;
-            border-radius: 10px; 
+            bottom: 20px; 
+            right: 20px; 
+            width: 100px; 
+            height: 130px; 
+            border-radius: 12px; 
             overflow: hidden; 
             transform: scaleX(-1); 
-            border: 1px solid rgba(255,255,255,0.3); 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.2); 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
         }
         video { width: 100%; height: 100%; object-fit: cover; }
 
         @media (min-width: 768px) {
-            #ui-layer { flex-direction: row; align-items: flex-start; }
-            #controls { margin-bottom: 0; }
-            #video-container { width: 180px; height: 135px; }
+            #video-container { width: 200px; height: 150px; }
         }
     </style>
 </head>
@@ -80,23 +65,12 @@
 
 <div id="ui-layer">
     <div id="legend" class="panel">
-        <h1>Gesture Engine</h1>
+        <h1>Tree Gesture Engine</h1>
         <div class="gesture-grid">
             <div id="g-vsign" class="gesture-item"><span>"V" Sign</span>Supernova</div>
-            <div id="g-fist" class="gesture-item"><span>Fist</span>Reset</div>
-            <div id="g-open" class="gesture-item"><span>Palm</span>Hue Shift</div>
-            <div id="g-heart" class="gesture-item"><span>2 Hands</span>Heart</div>
-        </div>
-    </div>
-
-    <div id="controls" class="panel">
-        <div class="control-group">
-            <label>Master Glow</label>
-            <input type="range" id="glowSlider" min="0" max="3" step="0.1" value="1.5">
-        </div>
-        <div class="control-group">
-            <label>Foliage Hue</label>
-            <input type="range" id="hueSlider" min="0" max="1" step="0.01" value="0.35">
+            <div id="g-fist" class="gesture-item"><span>Fist</span>Reset Tree</div>
+            <div id="g-open" class="gesture-item"><span>Open Palm</span>Hue & Disperse</div>
+            <div id="g-heart" class="gesture-item"><span>2 Hands</span>Heart Mode</div>
         </div>
     </div>
     
@@ -190,9 +164,6 @@ composer.addPass(new RenderPass(scene, camera));
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
 composer.addPass(bloomPass);
 
-document.getElementById('glowSlider').oninput = (e) => bloomPass.strength = parseFloat(e.target.value);
-document.getElementById('hueSlider').oninput = (e) => hueBase = parseFloat(e.target.value);
-
 const geometry = new THREE.BufferGeometry();
 const posArr = new Float32Array(TOTAL * 3);
 const treeTgt = new Float32Array(TOTAL * 3);
@@ -253,6 +224,7 @@ hands.onResults((res) => {
     document.querySelectorAll('.gesture-item').forEach(el => el.classList.remove('active'));
     if (res.multiHandLandmarks && res.multiHandLandmarks.length > 0) {
         const h = res.multiHandLandmarks[0];
+        
         rotationTarget.y = (h[9].x - 0.5) * (isMobile ? 2.5 : 4);
         rotationTarget.x = (h[9].y - 0.5) * (isMobile ? 1.2 : 2);
         
@@ -262,6 +234,7 @@ hands.onResults((res) => {
         } else {
             const isV = h[8].y < h[6].y && h[12].y < h[10].y && h[16].y > h[14].y;
             const isFist = h[8].y > h[5].y && h[12].y > h[9].y;
+
             if (isV) {
                 explodeFactor = 1.0;
                 document.getElementById('g-vsign').classList.add('active');
@@ -270,8 +243,7 @@ hands.onResults((res) => {
                 document.getElementById('g-fist').classList.add('active');
             } else {
                 currentState = STATE.DISPERSE;
-                hueBase = 1.0 - h[9].y;
-                document.getElementById('hueSlider').value = hueBase;
+                hueBase = 1.0 - h[9].y; 
                 document.getElementById('g-open').classList.add('active');
             }
         }
@@ -288,23 +260,25 @@ function animate(t) {
     requestAnimationFrame(animate);
     material.uniforms.uTime.value = t * 0.001;
     explodeFactor *= 0.92;
+    
     points.rotation.y += (rotationTarget.y - points.rotation.y) * 0.05;
     points.rotation.x += (rotationTarget.x - points.rotation.x) * 0.05;
 
     const pos = geometry.attributes.position.array;
     const col = geometry.attributes.color.array;
     const target = currentState === STATE.HEART ? heartTgt : (currentState === STATE.DISPERSE ? dispTgt : treeTgt);
-    
     const mobileYOffset = isMobile ? -4 : 0;
 
     for (let i = 0; i < TOTAL; i++) {
         const ix = i * 3;
+        
         if (i < TREE_COUNT) {
             const foli = new THREE.Color().setHSL(hueBase, 1, 0.4);
             col[ix] += (foli.r - col[ix]) * 0.1;
             col[ix+1] += (foli.g - col[ix+1]) * 0.1;
             col[ix+2] += (foli.b - col[ix+2]) * 0.1;
         }
+
         let tx = target[ix];
         let ty = target[ix+1] + mobileYOffset;
         let tz = target[ix+2];
@@ -319,6 +293,7 @@ function animate(t) {
         pos[ix+1] += (ty - pos[ix+1]) * 0.08;
         pos[ix+2] += (tz - pos[ix+2]) * 0.08;
     }
+    
     geometry.attributes.position.needsUpdate = true;
     geometry.attributes.color.needsUpdate = true;
     composer.render();
