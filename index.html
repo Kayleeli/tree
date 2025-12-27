@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Pro Gesture Tree - Mobile Optimized</title>
+    <title>Pro Gesture Tree - Mobile HUD Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <style>
-        :root { --gold: #ffd700; --panel-bg: rgba(0, 0, 0, 0.8); }
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: white; touch-action: none; }
+        :root { --gold: #ffd700; --panel-bg: rgba(0, 0, 0, 0.6); }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Inter', system-ui, sans-serif; color: white; touch-action: none; }
         canvas { display: block; }
         
         #ui-layer { 
@@ -18,50 +18,61 @@
             z-index: 10; 
             display: flex; 
             flex-direction: column; 
-            padding: 15px;
-            gap: 10px;
+            justify-content: space-between;
+            padding: 10px;
         }
 
         .panel { 
             pointer-events: auto; 
-            background: var(--panel-bg); 
-            backdrop-filter: blur(15px); 
-            padding: 15px; 
+            backdrop-filter: blur(10px); 
+            padding: 12px; 
             border-radius: 12px; 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
         }
 
-        #legend { width: 100%; max-width: 240px; }
-        #controls { width: 100%; max-width: 240px; }
+        #legend { 
+            width: 100%; 
+            max-width: 300px; 
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            border-left: 2px solid var(--gold);
+        }
 
-        h1 { margin: 0 0 10px 0; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); border-bottom: 1px solid rgba(255,215,0,0.3); padding-bottom: 5px; }
+        #controls { 
+            width: 100%; 
+            max-width: 300px; 
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 90px;
+        }
+
+        h1 { margin: 0 0 8px 0; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); opacity: 0.8; }
         
-        .gesture-item { margin: 8px 0; font-size: 10px; display: flex; flex-direction: column; opacity: 0.3; transition: 0.3s; }
-        .gesture-item span:first-child { font-weight: 800; text-transform: uppercase; font-size: 9px; color: var(--gold); }
-        .gesture-item.active { opacity: 1; transform: translateX(5px); }
+        .gesture-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .gesture-item { font-size: 9px; opacity: 0.3; transition: 0.3s; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 5px; }
+        .gesture-item span:first-child { font-weight: 800; display: block; color: var(--gold); font-size: 8px; }
+        .gesture-item.active { opacity: 1; border-left-color: var(--gold); transform: scale(1.05); }
         
-        .control-group { margin-bottom: 10px; }
-        label { display: block; font-size: 9px; text-transform: uppercase; margin-bottom: 5px; color: #aaa; }
-        
-        /* Better sliders for mobile thumbs */
-        input[type=range] { width: 100%; height: 20px; cursor: pointer; accent-color: var(--gold); }
+        .control-group { margin-top: 10px; }
+        label { display: block; font-size: 8px; text-transform: uppercase; margin-bottom: 4px; color: #aaa; }
+        input[type=range] { width: 100%; height: 24px; cursor: pointer; accent-color: var(--gold); }
 
         #video-container { 
             position: absolute; 
-            bottom: 20px; 
-            right: 20px; 
-            width: 100px; 
-            height: 75px; 
-            border-radius: 8px; 
+            bottom: 15px; 
+            right: 15px; 
+            width: 90px; 
+            height: 120px;
+            border-radius: 10px; 
             overflow: hidden; 
             transform: scaleX(-1); 
-            border: 1px solid rgba(255,255,255,0.2); 
+            border: 1px solid rgba(255,255,255,0.3); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         video { width: 100%; height: 100%; object-fit: cover; }
 
         @media (min-width: 768px) {
-            #ui-layer { flex-direction: row; justify-content: space-between; }
-            #video-container { width: 200px; height: 150px; }
+            #ui-layer { flex-direction: row; align-items: flex-start; }
+            #controls { margin-bottom: 0; }
+            #video-container { width: 180px; height: 135px; }
         }
     </style>
 </head>
@@ -70,22 +81,25 @@
 <div id="ui-layer">
     <div id="legend" class="panel">
         <h1>Gesture Engine</h1>
-        <div id="g-vsign" class="gesture-item"><span>"V" Sign</span><span>Supernova</span></div>
-        <div id="g-fist" class="gesture-item"><span>Closed Fist</span><span>Return to Tree</span></div>
-        <div id="g-open" class="gesture-item"><span>Open Palm</span><span>Hue / Disperse</span></div>
-        <div id="g-heart" class="gesture-item"><span>Two Hands</span><span>Volumetric Heart</span></div>
-        <div class="control-group" style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">
+        <div class="gesture-grid">
+            <div id="g-vsign" class="gesture-item"><span>"V" Sign</span>Supernova</div>
+            <div id="g-fist" class="gesture-item"><span>Fist</span>Reset</div>
+            <div id="g-open" class="gesture-item"><span>Palm</span>Hue Shift</div>
+            <div id="g-heart" class="gesture-item"><span>2 Hands</span>Heart</div>
+        </div>
+    </div>
+
+    <div id="controls" class="panel">
+        <div class="control-group">
             <label>Master Glow</label>
             <input type="range" id="glowSlider" min="0" max="3" step="0.1" value="1.5">
         </div>
-    </div>
-    <div id="controls" class="panel">
-        <h1>Calibration</h1>
         <div class="control-group">
             <label>Foliage Hue</label>
             <input type="range" id="hueSlider" min="0" max="1" step="0.01" value="0.35">
         </div>
     </div>
+    
     <div id="video-container"><video id="webcam" playsinline></video></div>
 </div>
 
@@ -98,8 +112,8 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 const isMobile = window.innerWidth < 768;
-const TREE_COUNT = isMobile ? 5000 : 9000;
-const ORN_COUNT = isMobile ? 300 : 600;
+const TREE_COUNT = isMobile ? 6000 : 9000;
+const ORN_COUNT = isMobile ? 400 : 600;
 const STAR_COUNT = 200;
 const TOTAL = TREE_COUNT + ORN_COUNT + STAR_COUNT;
 
@@ -121,11 +135,10 @@ const vertexShader = `
         vColor = color;
         vGlow = aGlow;
         vec3 p = position;
-        p.x += sin(uTime + position.y) * 0.03;
-        p.z += cos(uTime + position.x) * 0.03;
+        p.x += sin(uTime + position.y) * 0.02;
+        p.z += cos(uTime + position.x) * 0.02;
         vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
-        // Mobile-aware point sizing
-        gl_PointSize = aSize * uPixelRatio * (40.0 / -mvPosition.z);
+        gl_PointSize = aSize * uPixelRatio * (45.0 / -mvPosition.z);
         gl_Position = projectionMatrix * mvPosition;
     }
 `;
@@ -135,12 +148,11 @@ const fragmentShader = `
     varying float vGlow;
     void main() {
         float d = distance(gl_PointCoord, vec2(0.5));
-        float alpha = exp(-d * d * 8.0);
+        float alpha = exp(-d * d * 9.0);
         gl_FragColor = vec4(vColor * vGlow, alpha);
     }
 `;
 
-// Point generators remain same
 const getTreePoint = (i) => {
     const h = Math.random() * 16;
     const ratio = h / 16;
@@ -150,9 +162,9 @@ const getTreePoint = (i) => {
 };
 
 const getStarPoint = () => {
+    const r = Math.random() * 0.7;
     const phi = Math.acos(2 * Math.random() - 1);
     const theta = Math.random() * Math.PI * 2;
-    const r = Math.random() * 0.7;
     return { x: r * Math.sin(phi) * Math.cos(theta), y: 8.5 + r * Math.sin(phi) * Math.sin(theta), z: r * Math.cos(phi) };
 };
 
@@ -160,18 +172,17 @@ const getHeartPoint = () => {
     const t = Math.random() * Math.PI * 2;
     const x = 16 * Math.pow(Math.sin(t), 3);
     const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-    const zScale = Math.sqrt(Math.max(0, 1 - Math.pow(Math.random()*2 - 1, 2))) * 8;
-    const z = (Math.random() - 0.5) * zScale;
-    return { x: x * 0.4, y: y * 0.4, z: z * 0.4 };
+    const z = (Math.random() - 0.5) * 8;
+    return { x: x * 0.45, y: y * 0.45, z: z * 0.3 };
 };
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.z = isMobile ? 55 : 45;
+camera.position.z = isMobile ? 60 : 45;
 
 const renderer = new THREE.WebGLRenderer({ antialias: !isMobile });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap pixel ratio for performance
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 document.body.appendChild(renderer.domElement);
 
 const composer = new EffectComposer(renderer);
@@ -205,7 +216,7 @@ for (let i = 0; i < TOTAL; i++) {
     } else if (i < TREE_COUNT + ORN_COUNT) {
         tp = getTreePoint(i);
         colorObj.set(ornamentPalettes[Math.floor(Math.random() * ornamentPalettes.length)]);
-        sizeArr[i] = 4.0 + Math.random() * 2.5;
+        sizeArr[i] = 4.5 + Math.random() * 2.0;
         glowArr[i] = 2.5;
     } else {
         tp = getStarPoint();
@@ -218,7 +229,7 @@ for (let i = 0; i < TOTAL; i++) {
     const hp = getHeartPoint();
     heartTgt.set([hp.x, hp.y, hp.z], i * 3);
     dispTgt.set([(Math.random()-0.5)*80, (Math.random()-0.5)*80, (Math.random()-0.5)*80], i * 3);
-    const dir = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize().multiplyScalar(50);
+    const dir = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize().multiplyScalar(60);
     explodeDirs.set([dir.x, dir.y, dir.z], i * 3);
 }
 
@@ -228,29 +239,22 @@ geometry.setAttribute('aSize', new THREE.BufferAttribute(sizeArr, 1));
 geometry.setAttribute('aGlow', new THREE.BufferAttribute(glowArr, 1));
 
 const material = new THREE.ShaderMaterial({
-    uniforms: { 
-        uTime: { value: 0 }, 
-        uPixelRatio: { value: renderer.getPixelRatio() } 
-    },
-    vertexShader, fragmentShader, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+    uniforms: { uTime: { value: 0 }, uPixelRatio: { value: renderer.getPixelRatio() } },
+    vertexShader, fragmentShader, transparent: true, blending: THREE.NormalBlending, depthWrite: false
 });
 const points = new THREE.Points(geometry, material);
 scene.add(points);
 
 const video = document.getElementById('webcam');
 const hands = new Hands({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
-hands.setOptions({ 
-    maxNumHands: 2, 
-    modelComplexity: isMobile ? 0 : 1, // Lower complexity for mobile
-    minDetectionConfidence: 0.6 
-});
+hands.setOptions({ maxNumHands: 2, modelComplexity: isMobile ? 0 : 1, minDetectionConfidence: 0.6 });
 
 hands.onResults((res) => {
     document.querySelectorAll('.gesture-item').forEach(el => el.classList.remove('active'));
     if (res.multiHandLandmarks && res.multiHandLandmarks.length > 0) {
         const h = res.multiHandLandmarks[0];
-        rotationTarget.y = (h[9].x - 0.5) * 3;
-        rotationTarget.x = (h[9].y - 0.5) * 1.5;
+        rotationTarget.y = (h[9].x - 0.5) * (isMobile ? 2.5 : 4);
+        rotationTarget.x = (h[9].y - 0.5) * (isMobile ? 1.2 : 2);
         
         if (res.multiHandLandmarks.length === 2) {
             currentState = STATE.HEART;
@@ -276,20 +280,22 @@ hands.onResults((res) => {
 
 new Camera(video, { 
     onFrame: async () => await hands.send({image: video}), 
-    width: 480, height: 360, 
+    width: 480, height: 640, 
     facingMode: 'user' 
 }).start();
 
 function animate(t) {
     requestAnimationFrame(animate);
     material.uniforms.uTime.value = t * 0.001;
-    explodeFactor *= 0.93;
+    explodeFactor *= 0.92;
     points.rotation.y += (rotationTarget.y - points.rotation.y) * 0.05;
     points.rotation.x += (rotationTarget.x - points.rotation.x) * 0.05;
 
     const pos = geometry.attributes.position.array;
     const col = geometry.attributes.color.array;
     const target = currentState === STATE.HEART ? heartTgt : (currentState === STATE.DISPERSE ? dispTgt : treeTgt);
+    
+    const mobileYOffset = isMobile ? -4 : 0;
 
     for (let i = 0; i < TOTAL; i++) {
         const ix = i * 3;
@@ -299,12 +305,19 @@ function animate(t) {
             col[ix+1] += (foli.g - col[ix+1]) * 0.1;
             col[ix+2] += (foli.b - col[ix+2]) * 0.1;
         }
-        let tx = target[ix] + (explodeFactor > 0 ? explodeDirs[ix] * explodeFactor : 0);
-        let ty = target[ix+1] + (explodeFactor > 0 ? explodeDirs[ix+1] * explodeFactor : 0);
-        let tz = target[ix+2] + (explodeFactor > 0 ? explodeDirs[ix+2] * explodeFactor : 0);
-        pos[ix] += (tx - pos[ix]) * 0.1;
-        pos[ix+1] += (ty - pos[ix+1]) * 0.1;
-        pos[ix+2] += (tz - pos[ix+2]) * 0.1;
+        let tx = target[ix];
+        let ty = target[ix+1] + mobileYOffset;
+        let tz = target[ix+2];
+        
+        if (explodeFactor > 0.01) {
+            tx += explodeDirs[ix] * explodeFactor;
+            ty += explodeDirs[ix+1] * explodeFactor;
+            tz += explodeDirs[ix+2] * explodeFactor;
+        }
+
+        pos[ix] += (tx - pos[ix]) * 0.08;
+        pos[ix+1] += (ty - pos[ix+1]) * 0.08;
+        pos[ix+2] += (tz - pos[ix+2]) * 0.08;
     }
     geometry.attributes.position.needsUpdate = true;
     geometry.attributes.color.needsUpdate = true;
@@ -317,6 +330,7 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     composer.setSize(window.innerWidth, window.innerHeight);
+    material.uniforms.uPixelRatio.value = renderer.getPixelRatio();
 });
 </script>
 </body>
